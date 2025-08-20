@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "name": "Linux with MinGW-w64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "/usr/x86_64-w64-mingw32/include",
+        "/usr/x86_64-w64-mingw32/include/winapi"
+      ],
+      "defines": ["_WIN32", "_WIN64"],
+      "compilerPath": "/usr/bin/x86_64-w64-mingw32-gcc",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "linux-gcc-x64"
+    }
+  ],
+  "version": 4
+}
