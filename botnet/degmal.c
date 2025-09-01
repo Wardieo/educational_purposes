@@ -15,7 +15,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WSAStartup(MAKEWORD(2,2), &wsa);
 
     s = socket(AF_INET, SOCK_STREAM, 0);
-    server.sin_addr.s_addr = inet_addr("192.168.1.11"); // Change to server IP if needed
+    server.sin_addr.s_addr = inet_addr("192.168.0.107"); // Change to server IP if needed
     server.sin_family = AF_INET;
     server.sin_port = htons(9001);
 
