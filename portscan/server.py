@@ -7,7 +7,7 @@ import socket
 import threading
 import json
 
-HOST = "192.168.0.107"
+HOST = "10.56.255.216"
 PORT = 9100
 
 def handle_client(conn, addr):

@@ -1,4 +1,4 @@
-// Compile on Windows: gcc client_win.c -o client.exe -lws2_32
+// Compile on Windows: gcc client.c -o client.exe -lws2_32
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 #endif
 
-#define SERVER_IP   "192.168.0.107"
+#define SERVER_IP   "10.56.255.216"
 #define SERVER_PORT 9100
 #define MAX_LINE    8192
 #define MAX_PORTS   1024
@@ -76,9 +76,9 @@ void parse_ports(const char *json, int *ports, int *count) {
 
 void parse_target(const char *json, char *target, size_t tlen) {
     const char *p = strstr(json, "\"target\"");
-    if (!p) return;
+    if (!p) { target[0] = 0; return; }
     p = strchr(p, ':');
-    if (!p) return;
+    if (!p) { target[0] = 0; return; }
     p++;
     while (*p == ' ' || *p == '\"') p++;
     char *q = target;
@@ -91,7 +91,10 @@ void parse_target(const char *json, char *target, size_t tlen) {
 int main() {
 #ifdef _WIN32
     WSADATA wsa;
-    WSAStartup(MAKEWORD(2,2), &wsa);
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        fprintf(stderr, "WSAStartup failed\n");
+        return 1;
+    }
 #endif
     int sockfd;
     struct sockaddr_in serv_addr;
@@ -100,7 +103,16 @@ int main() {
     if (sockfd < 0) { perror("socket"); return 1; }
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(SERVER_PORT);
-    inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr);
+    if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) != 1) {
+        fprintf(stderr, "Invalid server IP\n");
+#ifdef _WIN32
+        closesocket(sockfd);
+        WSACleanup();
+#else
+        close(sockfd);
+#endif
+        return 1;
+    }
 
     if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("connect");
@@ -126,17 +138,25 @@ int main() {
 #else
             int n = read(sockfd, buf + idx, 1);
 #endif
-            if (n <= 0 || buf[idx] == '\n') break;
+            if (n <= 0) break;
+            if (buf[idx] == '\n') { idx++; break; }
             idx += n;
         }
         if (idx == 0) break; // connection closed
 
         buf[idx] = 0;
+        if (strlen(buf) < 10) continue; // ignore empty/short lines
+
         printf("Received command: %s\n", buf);
 
         // Parse target and ports
         parse_target(buf, target, sizeof(target));
         parse_ports(buf, ports, &port_count);
+
+        if (target[0] == 0 || port_count == 0) {
+            fprintf(stderr, "Malformed command or no ports specified.\n");
+            continue;
+        }
 
         // Scan ports
         open_count = 0;
